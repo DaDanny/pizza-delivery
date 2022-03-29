@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+  pizza-db:
+    image: mongo
+    container_name: "pizza-db"
+    # I didnt want to commit auth values to repo
+    # but this is for local DB auth only
+    # The issue I faced is difference in encoding for the .env
+    # between the mongo and node containers which prevented me from using
+    # shared .env file between them.
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "pizza-dev-only"
+      MONGO_INITDB_ROOT_PASSWORD: "jeeves"
+    volumes:
+      - "./data:/data/db"
+    ports:
+      - "27017:27017"
+    command: --quiet
+  pizza-api:
+    build: .
+    image: "pizza-api"
+    container_name: "pizza-api"
+    working_dir: "/api"
+    command: "npm run development"
+    restart: always
+    depends_on:
+      - pizza-db
+    ports:
+      - "80:3000"
+    volumes:
+      - "./package.json:/api/package.json"
+      - "./src:/api/src"
+    links:
+      - pizza-db
